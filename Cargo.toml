@@ -1,10 +1,10 @@
 [package]
 name = "mpv_websocket"
-version = "0.4.4"
+version = "0.4.5"
 edition = "2021"
 authors = ["kuroahna"]
-repository = "https://github.com/kuroahna/mpv_websocket"
-homepage = "https://github.com/kuroahna/mpv_websocket"
+repository = "https://github.com/balfiere/mpv_websocket_exstatic"
+homepage = "https://github.com/balfiere/mpv_websocket_exstatic"
 license = "MIT"
 
 [profile.dev]

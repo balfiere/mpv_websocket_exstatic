@@ -1,11 +1,30 @@
-# mpv_websocket
+# mpv_websocket (exSTATic Fork)
 
 [![](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/kuroahna)
+
+## Fork
+
+This is a fork of [mpv_websocket](https://github.com/kuroahna/mpv_websocket) modified to support the [exSTATic](https://github.com/KamWithK/exSTATic) reading tracker. Support for other texthooking pages such as [texthooker-ui](https://github.com/Renji-XD/texthooker-ui) is retained.
+
+It opens a WebSocket locally on port `9001` by default and sends subtitles in a JSON format compatible with exSTATic.
+
+### exSTATic Support
+
+Unlike the original project which sends raw text, this fork sends JSON objects that include the current video path:
+
+```json
+{
+  "process_path": "/path/to/video.mkv",
+  "sentence": "Subtitle text content"
+}
+```
+
+This allows exSTATic to track immersion statistics per-video.
 
 ## Description
 
 A plugin for [mpv](https://mpv.io/) written in Rust that opens a WebSocket
-locally on port `6677` by default and sends the subtitles to all connected
+locally on port `9001` by default and sends the subtitles to all connected
 clients. The plugin uses mpv's
 [JSON IPC](https://mpv.io/manual/master/#json-ipc) protocol for capturing the
 subtitles.
@@ -37,6 +56,7 @@ show up in the texthooker page. This requires the user to manually delete the
 unwanted copied text on the page.
 
 ## Build
+
 If you want to build the binary yourself, you can follow the instructions below.
 Otherwise, skip to the [Install](#install) section.
 
@@ -54,6 +74,7 @@ Pre-compiled binaries are available in the
 [Releases](https://github.com/kuroahna/mpv_websocket/releases) page
 
 ### Windows
+
 1. Copy the
    [mpv_websocket.exe](https://github.com/kuroahna/mpv_websocket/releases/latest/download/x86_64-pc-windows-gnu.zip)
    binary file into your
@@ -80,6 +101,7 @@ Pre-compiled binaries are available in the
 </details>
 
 ### Linux
+
 1. Copy the
    [mpv_websocket](https://github.com/kuroahna/mpv_websocket/releases/latest/download/x86_64-unknown-linux-musl.zip)
    binary file into your
@@ -105,16 +127,16 @@ Pre-compiled binaries are available in the
 
 </details>
 
-
 ### Mac
+
 1. [Verify](https://support.apple.com/en-ca/116943) whether you have a Mac
    computer with Apple silicon or an Intel-based Mac
-   * **(Apple silicon)** Copy the
+   - **(Apple silicon)** Copy the
      [mpv_websocket](https://github.com/kuroahna/mpv_websocket/releases/latest/download/aarch64-apple-darwin.zip)
      binary file into your
      [~/.config/mpv](https://mpv.io/manual/stable/#files) folder. Create the
      folder if it does not already exist
-   * **(Intel-based Mac)** Copy the
+   - **(Intel-based Mac)** Copy the
      [mpv_websocket](https://github.com/kuroahna/mpv_websocket/releases/latest/download/x86_64-apple-darwin.zip)
      binary file into your
      [~/.config/mpv](https://mpv.io/manual/stable/#files) folder. Create the
@@ -140,6 +162,7 @@ Pre-compiled binaries are available in the
 </details>
 
 ## Troubleshooting
+
 If after following the [Installation](#install) steps and mpv_websocket doesn't
 seem to work:
 
@@ -156,13 +179,15 @@ seem to work:
   mpv_websocket server to capture the subtitles from mpv.
 
   For Windows, open command prompt, and run
+
   ```
-  %appdata%\mpv\mpv_websocket.exe -m \\.\pipe\tmp\mpv-socket -w 6677
+  %appdata%\mpv\mpv_websocket.exe -m \\.\pipe\tmp\mpv-socket -w 9001
   ```
 
   For Linux/Mac, open a terminal, and run
+
   ```
-  ~/.config/mpv/mpv_websocket -m /tmp/mpv-socket -w 6677
+  ~/.config/mpv/mpv_websocket -m /tmp/mpv-socket -w 9001
   ```
 
   If there are no errors/output in the terminal/command prompt, then
@@ -178,7 +203,7 @@ seem to work:
   errors such as
 
   ```
-  > ~/.config/mpv/mpv_websocket -m /tmp/mpv-socket -w 6677
+  > ~/.config/mpv/mpv_websocket -m /tmp/mpv-socket -w 9001
 
   thread 'main' panicked at 'Is mpv running with `--input-ipc-server=/tmp/mpv-socket`: Connection refused (os error 111)', src/mpv.rs:54:13
   note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
@@ -191,21 +216,21 @@ seem to work:
   binary in the terminal
 
   ```
-  > ~/.config/mpv/mpv_websocket -m /tmp/mpv-socket -w 6677
+  > ~/.config/mpv/mpv_websocket -m /tmp/mpv-socket -w 9001
 
-  thread '<unnamed>' panicked at 'The address `0.0.0.0:6677` is in use: address in use', src/websocket.rs:27:37
+  thread '<unnamed>' panicked at 'The address `0.0.0.0:9001` is in use: address in use', src/websocket.rs:27:37
   note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
   ```
 
-  This error indicates that the address `0.0.0.0:6677` is already in use and the
-  mpv_websocket server could not start on port 6677. Check to make sure you do
+  This error indicates that the address `0.0.0.0:9001` is already in use and the
+  mpv_websocket server could not start on port 9001. Check to make sure you do
   not have any other servers running on this port. If you do, close them and try
   again. It is also possible that you have mpv_websocket already running and it
   did not automatically close, so double check if it is running via Task Manager
   (Windows) or `pgrep mpv_websocket` (Linux/Mac).
 
   ```
-  > ~/.config/mpv/mpv_websocket -m /tmp/mpv-socket -w 6677
+  > ~/.config/mpv/mpv_websocket -m /tmp/mpv-socket -w 9001
 
   bash: ~/.config/mpv/mpv_websocket: Permission denied
   ```
@@ -257,7 +282,7 @@ seem to work:
 
 After installing the plugin, when you play a video using mpv with subtitles, mpv
 will automatically start the `mpv_websocket` server and can be connected at
-`ws://localhost:6677` (or the address/port you have specified in the script)
+`ws://localhost:9001` (or the address/port you have specified in the script)
 
 You will need a WebSocket client such as
 [texthooker-ui](https://github.com/Renji-XD/texthooker-ui) to stream the

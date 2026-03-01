@@ -57,7 +57,7 @@ local function start_websocket()
     "-m",
     mpv_socket,
     "-w",
-    "6677",
+    "9001",
   }
 
   if use_secondary_subs then

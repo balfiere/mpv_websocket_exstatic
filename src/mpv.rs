@@ -144,6 +144,7 @@ struct ConnectedState {
     messages: VecDeque<Arc<str>>,
     write: WriteState,
     sender: SyncSender<Arc<str>>,
+    current_path: Option<String>,
 }
 
 impl ConnectedState {
@@ -164,6 +165,7 @@ impl ConnectedState {
                                     messages: VecDeque::new(),
                                     write: WriteState::Unwritable,
                                     sender,
+                                    current_path: None,
                                 },
                             );
                             return Ok(Some(SocketState::Closed(state.stream)));
@@ -204,10 +206,30 @@ impl ConnectedState {
                         }
                     };
 
-                    let data: Arc<str> = event.data.into();
-                    self.sender.send(data.clone()).unwrap_or_else(|e| {
-                        panic!("failed to send text `{data}` to WebSocket clients: {e:?}")
-                    });
+                    match event.name {
+                        Property::Path => {
+                            self.current_path = Some(event.data);
+                        }
+                        Property::SubText | Property::SecondarySubText => {
+                            if event.data.trim().is_empty() {
+                                continue;
+                            }
+
+                            let process_path = self.current_path.as_deref().unwrap_or("mpv");
+                            let json = serde_json::json!({
+                                "process_path": process_path,
+                                "sentence": event.data
+                            });
+
+                            let data: Arc<str> = json.to_string().into();
+                            self.sender.send(data.clone()).unwrap_or_else(|e| {
+                                panic!(
+                                    "failed to send text `{}` to WebSocket clients: {:?}",
+                                    json, e
+                                )
+                            });
+                        }
+                    }
                 }
 
                 Ok(None)
@@ -249,6 +271,7 @@ impl ConnectedState {
                                 messages: VecDeque::new(),
                                 write: WriteState::Unwritable,
                                 sender,
+                                current_path: None,
                             },
                         );
                         return Ok(Some(SocketState::Closed(state.stream)));
@@ -277,6 +300,8 @@ const OBSERVE_PROPERTY_SUB_TEXT: &[u8] = b"{\"command\":[\"observe_property\",1,
 const OBSERVE_PROPERTY_SECONDARY_SUB_TEXT: &[u8] =
     b"{\"command\":[\"observe_property\",1,\"secondary-sub-text\"]}\n";
 
+const OBSERVE_PROPERTY_PATH: &[u8] = b"{\"command\":[\"observe_property\",2,\"path\"]}\n";
+
 const UTF8_NULL_CHARACTER: u8 = 0;
 const UTF8_NEWLINE_CHARACTER: u8 = b"\n"[0];
 
@@ -292,6 +317,8 @@ enum Property {
     SubText,
     #[serde(rename = "secondary-sub-text")]
     SecondarySubText,
+    #[serde(rename = "path")]
+    Path,
 }
 
 #[allow(dead_code)]
@@ -370,6 +397,7 @@ impl Client {
             messages: VecDeque::new(),
             write: WriteState::Unwritable,
             sender,
+            current_path: None,
         });
 
         let observe_command = if self.use_secondary_subs {
@@ -382,6 +410,14 @@ impl Client {
             .next_state(SocketMessage::SendText(
                 std::str::from_utf8(observe_command)
                     .expect("observe property sub-text command should be a valid UTF-8 string")
+                    .into(),
+            ))
+            .unwrap_or_else(|e| panic!("message should not have been sent yet: {e:?}"));
+
+        state
+            .next_state(SocketMessage::SendText(
+                std::str::from_utf8(OBSERVE_PROPERTY_PATH)
+                    .expect("observe property path command should be a valid UTF-8 string")
                     .into(),
             ))
             .unwrap_or_else(|e| panic!("message should not have been sent yet: {e:?}"));
